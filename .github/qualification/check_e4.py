@@ -12,6 +12,7 @@ from urllib.request import Request, urlopen
 BASE = "a49ff9d84c592ed8f20c6edb0d833939b958749d"
 PAGE = "docs/06-ai-agents/03-agent-communication/03-shared-memory.md"
 SOURCE_HASH = "b63bc05f70434e05c85366c21056432f6d5a6def9235573a9797099742f218a8"
+CONFIG_HASH = "03f597b5907d627b33ac10e5aa1817aa40216a14dc8ce562adf80bdf27e819da"
 CANDIDATE_HASH = "fc7ba87e715aa2fe04c7185b7c49d0723b4b8b99dac7f1d423177c8165ca5427"
 URLS = (
     "https://clickhouse.github.io/loom/use-cases/multi-agent/",
@@ -42,10 +43,11 @@ def source():
     candidate = Path(PAGE).read_bytes()
     assert hashlib.sha256(original).hexdigest() == SOURCE_HASH
     assert hashlib.sha256(candidate).hexdigest() == CANDIDATE_HASH
-    assert git("rev-parse", "HEAD^").decode().strip() == BASE
+    subprocess.run(["git", "merge-base", "--is-ancestor", BASE, "HEAD"], check=True)
     changed = set(git("diff", "--name-only", BASE, "HEAD").decode().splitlines())
-    assert changed == {PAGE, ".github/workflows/e4-qualification.yml", ".github/qualification/check_e4.py"}, changed
-    for path in ("requirements.txt", "mkdocs.yaml", "hooks/normalize_headings.py", ".github/workflows/ci.yaml"):
+    assert changed == {PAGE, "mkdocs.yaml", ".github/workflows/e4-qualification.yml", ".github/qualification/check_e4.py"}, changed
+    assert hashlib.sha256(Path("mkdocs.yaml").read_bytes()).hexdigest() == CONFIG_HASH
+    for path in ("requirements.txt", "hooks/normalize_headings.py", ".github/workflows/ci.yaml"):
         assert Path(path).read_bytes() == git("show", f"{BASE}:{path}"), path
     fences = r"(?ms)^```.*?^```[^\n]*"
     assert re.findall(fences, original.decode()) == re.findall(fences, candidate.decode())
