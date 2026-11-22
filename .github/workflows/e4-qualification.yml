@@ -52,13 +52,7 @@ jobs:
       - name: Build repaired baseline without E4 prose with same strict gate
         id: baseline
         if: ${{ !cancelled() && steps.pins.outcome == 'success' && steps.deps.outcome == 'success' }}
-        run: |
-          git diff a49ff9d84c592ed8f20c6edb0d833939b958749d HEAD -- mkdocs.yaml > "$RUNNER_TEMP/e4-source-repair.patch"
-          git worktree add --detach "$RUNNER_TEMP/e4-repaired-baseline" a49ff9d84c592ed8f20c6edb0d833939b958749d
-          cd "$RUNNER_TEMP/e4-repaired-baseline"
-          git apply "$RUNNER_TEMP/e4-source-repair.patch"
-          sha256sum mkdocs.yaml
-          mkdocs build --strict
+        run: python .github/qualification/check_e4.py baseline
       - name: Record qualification outcomes
         if: ${{ always() }}
         env:
